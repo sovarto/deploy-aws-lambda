@@ -1,0 +1,79 @@
+{
+  "name": "@sovarto/deploy-aws-lambda",
+  "description": "Deploys an AWS Lambda.",
+  "version": "0.0.1",
+  "author": "Sovarto GmbH",
+  "private": true,
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/actions/typescript-action.git"
+  },
+  "bugs": {
+    "url": "https://github.com/actions/typescript-action/issues"
+  },
+  "keywords": [
+    "actions",
+    "node",
+    "setup"
+  ],
+  "exports": {
+    ".": "./dist/index.js"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "bundle": "npm run package",
+    "package": "docker run --rm -v \".:/src\" -w /src --entrypoint sh node:lts -c \"cd /src && export PATH=/src/node_modules/.bin:$PATH && linefix src && npx ncc build src/index.ts -o dist --source-map --license licenses.txt && linefix dist\"",
+    "package:watch": "npm run package -- --watch"
+  },
+  "license": "MIT",
+  "jest": {
+    "preset": "ts-jest",
+    "verbose": true,
+    "clearMocks": true,
+    "testEnvironment": "node",
+    "moduleFileExtensions": [
+      "js",
+      "ts"
+    ],
+    "testMatch": [
+      "**/*.test.ts"
+    ],
+    "testPathIgnorePatterns": [
+      "/node_modules/",
+      "/dist/"
+    ],
+    "transform": {
+      "^.+\\.ts$": "ts-jest"
+    },
+    "coverageReporters": [
+      "json-summary",
+      "text",
+      "lcov"
+    ],
+    "collectCoverage": true,
+    "collectCoverageFrom": [
+      "./src/**"
+    ]
+  },
+  "dependencies": {
+    "@actions/core": "^1.10.1",
+    "@aws-sdk/client-s3": "^3.598.0",
+    "@cdktf/provider-aws": "^19.23.0",
+    "@sovarto/cdktf-state": "^0.0.17",
+    "cdktf": "^0.20.7",
+    "constructs": "^10.3.0"
+  },
+  "devDependencies": {
+    "@jest/globals": "^29.7.0",
+    "@types/jest": "^29.5.12",
+    "@types/node": "^20.12.12",
+    "@vercel/ncc": "^0.38.1",
+    "jest": "^29.7.0",
+    "linefix": "^0.1.1",
+    "make-coverage-badge": "^1.2.0",
+    "ts-jest": "^29.1.2",
+    "typescript": "^5.4.5"
+  }
+}

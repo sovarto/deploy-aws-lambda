@@ -1,0 +1,47 @@
+name: 'Deploy AWS Lambda by Sovarto'
+description: 'Deploys an AWS Lambda.'
+author: 'Sovarto GmbH'
+
+branding:
+  icon: 'upload-cloud'
+  color: 'blue'
+
+inputs:
+  lambda-name:
+    description: ''
+    required: true
+  zip-file:
+    description: ''
+    required: true
+  version:
+    description: ''
+    required: true
+    default: ${{ github.sha }}
+  api-gateway-id:
+    description: 'The ID of the API Gateway to add a route to. Leave blank if no API gateway should be used.'
+    required: false
+  s3-bucket:
+    description: ''
+    required: true
+  timeout:
+    description: ''
+    required: true
+  memory:
+    description: ''
+    required: true
+  role-arn:
+    description: ''
+    required: true
+  scheduler-expression:
+    description: ''
+    required: false
+  environment:
+    description: ''
+    required: false
+  remote-state-access-token:
+    description: ''
+    required: true
+
+runs:
+  using: node20
+  main: dist/index.js
