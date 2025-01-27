@@ -47,8 +47,12 @@ export class LambdaStack extends TerraformStack {
         });
 
         if (options.schedulerExpression) {
-            const scheduler = new CloudwatchEventRule(this, 'scheduler', {
+            const scheduler = new CloudwatchEventRule(this, 'lambda-scheduler', {
                 name: `lambda-scheduler-${options.lambdaName}`,
+                scheduleExpression: options.schedulerExpression
+            });
+            new CloudwatchEventRule(this, 'scheduler', {
+                name: 'Scheduler',
                 scheduleExpression: options.schedulerExpression
             });
             new LambdaPermission(this, 'allow-cloudwatch-to-invoke', {
