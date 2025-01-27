@@ -1,7 +1,7 @@
 {
   "name": "@sovarto/deploy-aws-lambda",
   "description": "Deploys an AWS Lambda.",
-  "version": "0.0.3",
+  "version": "0.0.4",
   "author": "Sovarto GmbH",
   "private": true,
   "repository": {
