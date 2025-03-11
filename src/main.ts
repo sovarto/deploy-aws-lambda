@@ -8,7 +8,11 @@ import { synth } from './cdktf';
 
 async function uploadBuildOutputToS3(s3Bucket: string, s3Key: string, zipFilePath: string) {
     const s3Client = new S3Client();
-    await s3Client.send(new PutObjectCommand({ Bucket: s3Bucket, Key: s3Key, Body: fs.readFileSync(zipFilePath) }));
+    await s3Client.send(new PutObjectCommand({
+        Bucket: s3Bucket,
+        Key: s3Key,
+        Body: fs.readFileSync(zipFilePath)
+    }));
 }
 
 /**
@@ -19,22 +23,26 @@ export async function run(): Promise<void> {
     try {
         const lambdaName = core.getInput('lambda-name', { required: true });
         const zipFile = core.getInput('zip-file', { required: true });
-        const version = core.getInput('version', {required: true});
+        const version = core.getInput('version', { required: true });
         const apiGatewayId = core.getInput('api-gateway-id', { required: false });
         const s3Bucket = core.getInput('s3-bucket', { required: true });
         const timeout = parseInt(core.getInput('timeout', { required: true }), 10);
         const memory = parseInt(core.getInput('memory', { required: true }), 10);
         const roleArn = core.getInput('role-arn', { required: true });
         const schedulerExpression = core.getInput('scheduler-expression', { required: false });
+        const eventTargetInput = core.getInput('event-target-input', { required: false });
         const environment = core.getInput('environment', { required: false });
-        const remoteStateAccessToken = core.getInput('remote-state-access-token', { required: true });
+        const remoteStateAccessToken = core.getInput('remote-state-access-token',
+            { required: true });
 
         const remoteStateAccessConfig = RemoteStateAccessConfigSchema.parse(
             JSON.parse(Buffer.from(remoteStateAccessToken, 'base64').toString()));
 
-        const zipFilePath = path.isAbsolute(zipFile) ? zipFile : path.resolve(process.env.GITHUB_WORKSPACE!, zipFile)
+        const zipFilePath = path.isAbsolute(zipFile)
+                            ? zipFile
+                            : path.resolve(process.env.GITHUB_WORKSPACE!, zipFile);
 
-        const s3Key = `${lambdaName}-${version}.zip`
+        const s3Key = `${ lambdaName }-${ version }.zip`;
         await uploadBuildOutputToS3(s3Bucket, s3Key, zipFilePath);
 
         const outDirName = `${ lambdaName }_cdktf.out`;
@@ -50,8 +58,10 @@ export async function run(): Promise<void> {
                 memory,
                 roleArn,
                 schedulerExpression,
+                eventTargetInput: parseVariablesString(eventTargetInput || '',
+                    'event-target-input'),
                 lambdaName,
-                environment: parseEnvironmentVariablesString(environment || '')
+                environment: parseVariablesString(environment || '', 'environment')
             });
         const stackDir = path.join(outDir, 'stacks', lambdaName);
         execSync(`terraform init`, { cwd: stackDir, stdio: 'inherit' });
@@ -84,21 +94,22 @@ function formatError(error: unknown) {
 }
 
 
-function parseEnvironmentVariablesString(environmentVariablesString: string) {
-    const items = getEnvironmentItems(environmentVariablesString);
+function parseVariablesString(environmentVariablesString: string, type: string) {
+    const items = getEnvironmentItems(environmentVariablesString, type);
 
     return items.reduce<Record<string, string>>((acc, { name, value }) => {
         if (acc[name]) {
-            throw new Error(`The environment variable '${ name }' was specified multiple times in the action inputs`);
+            throw new Error(`The ${ type } variable '${ name }' was specified multiple times in the action inputs`);
         }
         acc[name] = value;
         return acc;
     }, {});
 }
 
-function getEnvironmentItems(environmentVariablesString: string) {
+function getEnvironmentItems(environmentVariablesString: string, type: string) {
     try {
-        const env: { name: string, value: string, sensitive?: boolean }[] = JSON.parse(environmentVariablesString);
+        const env: { name: string, value: string, sensitive?: boolean }[] = JSON.parse(
+            environmentVariablesString);
         for (const item of env) {
             if (item.sensitive) {
                 core.setSecret(item.value);
@@ -106,11 +117,12 @@ function getEnvironmentItems(environmentVariablesString: string) {
         }
         return env;
     } catch (e) {
-        const items = environmentVariablesString.split('\n').map(x => x.trim()).filter(x => !!x.length)
+        const items = environmentVariablesString.split('\n').map(x => x.trim())
+                                                .filter(x => !!x.length)
                                                 .map(x => x.split('='));
         const invalidLines = items.filter(x => x.length === 1);
         if (invalidLines.length) {
-            throw new Error(`Invalid environment variables received. Input 'environment-variables' needs to be valid JSON or it needs to be lines of the form NAME=value. The following lines are invalid:\n${ invalidLines.join(
+            throw new Error(`Invalid ${ type } variables received. Input needs to be valid JSON or it needs to be lines of the form NAME=value. The following lines are invalid:\n${ invalidLines.join(
                 '\n') }`);
         }
 

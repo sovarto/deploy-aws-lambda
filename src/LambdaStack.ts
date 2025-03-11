@@ -19,6 +19,7 @@ interface Options {
     memory: number,
     roleArn: string,
     schedulerExpression: string | undefined,
+    eventTargetInput: Record<string, string> | undefined,
     environment: Record<string, string> | undefined,
     lambdaName: string,
     backendFactory: (scope: LambdaStack, name: string) => TerraformBackend;
@@ -61,6 +62,7 @@ export class LambdaStack extends TerraformStack {
             new CloudwatchEventTarget(this, 'invoke-lambda', {
                 rule: scheduler.name,
                 arn: lambda.arn,
+                input: JSON.stringify(options.eventTargetInput)
             });
         }
 

@@ -38,6 +38,9 @@ inputs:
   environment:
     description: ''
     required: false
+  event-target-input:
+    description: ''
+    required: false
   remote-state-access-token:
     description: ''
     required: true
